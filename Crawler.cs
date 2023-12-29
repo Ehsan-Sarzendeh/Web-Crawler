@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace WebCrawler;
 
@@ -18,6 +19,8 @@ public class Crawler
     private readonly Queue<string> _urlQueue;
     private HashSet<string> _disallowPath;
 
+    private readonly XmlDocument _xmlDoc;
+
     private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     public Crawler(string seedUrl, int maxPageNo)
@@ -27,6 +30,12 @@ public class Crawler
         _disallowPath = new HashSet<string>();
         _urlSet = new HashSet<string> { seedUrl };
         _urlQueue = new Queue<string>();
+
+        _xmlDoc = new XmlDocument();
+        var root = _xmlDoc.CreateElement("root");
+        _xmlDoc.AppendChild(root);
+        _xmlDoc.Save("output.xml");
+
         _urlQueue.Enqueue(seedUrl);
     }
 
@@ -88,13 +97,30 @@ public class Crawler
 
     private void Save(string url, string htmlContent)
     {
-        var htmlPath = Directory.GetCurrentDirectory() + "\\Pages\\Pages.html";
-        File.AppendAllText(htmlPath, htmlContent);
+        try
+        {
+            var rootElement = _xmlDoc.DocumentElement!;
 
-        var repPath = Directory.GetCurrentDirectory() + "\\Pages\\URLRep.txt";
-        File.AppendAllText(repPath, url + "\n");
+            var docElement = _xmlDoc.CreateElement("doc");
+            var urlElement = _xmlDoc.CreateElement("url");
+            var contentElement = _xmlDoc.CreateElement("content");
+            var cdata = _xmlDoc.CreateCDataSection(htmlContent.Replace("<![CDATA[", "").Replace("]]>", ""));
 
-        _repositoryUrl++;
+            urlElement.InnerText = url;
+
+            rootElement.AppendChild(docElement);
+            docElement.AppendChild(urlElement);
+            docElement.AppendChild(contentElement);
+            contentElement.AppendChild(cdata);
+
+            _xmlDoc.Save("output.xml");
+
+            _repositoryUrl++;
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
     }
 
     public void ParseUrLs(string htmlContent)
