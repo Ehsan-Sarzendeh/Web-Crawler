@@ -34,7 +34,7 @@ public class Crawler
         _xmlDoc = new XmlDocument();
         var root = _xmlDoc.CreateElement("root");
         _xmlDoc.AppendChild(root);
-        _xmlDoc.Save("output.xml");
+        _xmlDoc.Save("output-filmnet.ir.xml");
 
         _urlQueue.Enqueue(seedUrl);
     }
@@ -42,7 +42,7 @@ public class Crawler
     public async Task Run()
     {
         var watch = Stopwatch.StartNew();
-        _disallowPath = await ReadRobotsDisallowPath();
+        // _disallowPath = await ReadRobotsDisallowPath();
         while (_urlQueue.Count > 0 && _repositoryUrl < _maxPageNo)
         {
             await Crawl();
@@ -143,8 +143,8 @@ public class Crawler
                 if (link.EndsWith("/"))
                     link = link[..^1];
 
-                if (IsLinkDisallow(link))
-                    continue;
+                // if (IsLinkDisallow(link))
+                //     continue;
 
                 if (_urlSet.Contains(link))
                     continue;
